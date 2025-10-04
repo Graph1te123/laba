@@ -12,8 +12,8 @@ public class UserController {
     //http://localhost:8080/users
     public UserController() {
         // Добавлять пользователей.
-        users.add(new User("Egor", 21));
-        users.add(new User("NeEgor", 22));
+        users.add(new User("Sanechka", 20));
+        users.add(new User("NeSanechka", 21));
     }
 
     @GetMapping
@@ -39,3 +39,4 @@ public class UserController {
         public void setAge(int age) { this.age = age; }
     }
 }
+
