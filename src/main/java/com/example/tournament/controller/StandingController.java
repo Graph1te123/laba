@@ -1,3 +1,4 @@
+// src/main/java/com/example/tournament/controller/StandingController.java
 package com.example.tournament.controller;
 
 import com.example.tournament.model.Standing;
@@ -18,26 +19,22 @@ public class StandingController {
         this.standingService = standingService;
     }
 
-    // ✅ Получить текущую турнирную таблицу
     @GetMapping
     public ResponseEntity<List<Standing>> getAllStandings() {
         return ResponseEntity.ok(standingService.getAllStandings());
     }
 
-    // ✅ Пересчитать таблицу заново (на основе сыгранных матчей)
     @PostMapping("/update")
     public ResponseEntity<Map<String, String>> updateStandings() {
         standingService.updateStandings();
         return ResponseEntity.ok(Map.of("message", "Турнирная таблица успешно пересчитана"));
     }
 
-    // ✅ Получить топ команд по очкам
     @GetMapping("/top/{limit}")
     public ResponseEntity<List<Standing>> getTopTeams(@PathVariable int limit) {
         return ResponseEntity.ok(standingService.getTopTeams(limit));
     }
 
-    // ✅ Сбросить статистику всех команд
     @PostMapping("/reset")
     public ResponseEntity<Map<String, String>> resetStandings() {
         standingService.resetStandings();
