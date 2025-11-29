@@ -1,10 +1,13 @@
-// src/main/java/com/example/tournament/dto/RegisterRequest.java
 package com.example.tournament.dto;
 
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegisterRequest {
 
     @NotBlank(message = "Username is required")
@@ -16,11 +19,11 @@ public class RegisterRequest {
     @Pattern(regexp = ".*[!@#$%^&*()_+].*", message = "Password must contain at least one special character")
     private String password;
 
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    private String email;
+
     @NotBlank(message = "Role is required")
     @Pattern(regexp = "ADMIN|USER", message = "Role must be ADMIN or USER")
     private String role;
-
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
-    private String email; // НОВОЕ ПОЛЕ
 }

@@ -5,20 +5,35 @@ import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
+@Table(name = "teams")
 public class Team {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "name", nullable = false)
     private String name;
+
+    @Column(name = "city")
     private String city;
+
+    @Column(name = "coach")
     private String coach;
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Player> players;
 
-    // --- Геттеры и сеттеры ---
+
+    public Team() {}
+
+    public Team(String name, String city, String coach) {
+        this.name = name;
+        this.city = city;
+        this.coach = coach;
+    }
+
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -33,4 +48,14 @@ public class Team {
 
     public List<Player> getPlayers() { return players; }
     public void setPlayers(List<Player> players) { this.players = players; }
+
+    @Override
+    public String toString() {
+        return "Team{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", city='" + city + '\'' +
+                ", coach='" + coach + '\'' +
+                '}';
+    }
 }

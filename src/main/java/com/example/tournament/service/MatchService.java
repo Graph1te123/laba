@@ -28,7 +28,7 @@ public class MatchService {
         this.venueRepository = venueRepository;
     }
 
-    // ✅ Создание матча
+
     public Match createMatch(MatchRequest request) {
         Optional<Team> homeTeamOpt = teamRepository.findById(request.getHomeTeamId());
         Optional<Team> awayTeamOpt = teamRepository.findById(request.getAwayTeamId());
@@ -43,8 +43,9 @@ public class MatchService {
         Venue venue = venueOpt.get();
         LocalDateTime matchDate = request.getMatchDate();
 
-        // Проверка: у команд нет других матчей в это время
-        if (matchRepository.existsByHomeTeamOrAwayTeamAndMatchDate(homeTeam, awayTeam, matchDate)) {
+
+        if (matchRepository.existsTeamConflict(homeTeam, matchDate) ||
+                matchRepository.existsTeamConflict(awayTeam, matchDate)) {
             throw new IllegalStateException("Одна из команд уже играет в это время!");
         }
 
@@ -59,34 +60,32 @@ public class MatchService {
         return matchRepository.save(match);
     }
 
-    // ✅ Получение всех матчей
+
     public List<Match> getAllMatches() {
         return matchRepository.findAll();
     }
 
-    // ✅ Получение одного матча по ID
+
     public Match getMatchById(Long id) {
         return matchRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Матч с ID " + id + " не найден"));
     }
 
-    // ✅ Удаление матча
+
     public void deleteMatch(Long id) {
+        if (!matchRepository.existsById(id)) {
+            throw new IllegalArgumentException("Матч с ID " + id + " не найден");
+        }
         matchRepository.deleteById(id);
     }
 
-    // ✅ Получить все матчи конкретной команды
+
     public List<Match> getMatchesByTeam(Long teamId) {
-        return matchRepository.findAll().stream()
-                .filter(m -> m.getHomeTeam().getId().equals(teamId) || m.getAwayTeam().getId().equals(teamId))
-                .toList();
+        return matchRepository.findByTeamId(teamId);
     }
 
-    // ✅ Получить все предстоящие матчи
+
     public List<Match> getUpcomingMatches() {
-        LocalDateTime now = LocalDateTime.now();
-        return matchRepository.findAll().stream()
-                .filter(m -> m.getMatchDate().isAfter(now))
-                .toList();
+        return matchRepository.findUpcomingMatches();
     }
 }

@@ -1,75 +1,99 @@
 package com.example.tournament.controller;
 
 import com.example.tournament.dto.MatchRequest;
+import com.example.tournament.exception.ResourceNotFoundException;
 import com.example.tournament.model.Match;
+import com.example.tournament.repository.MatchRepository;
+import com.example.tournament.repository.TeamRepository;
+import com.example.tournament.repository.VenueRepository;
 import com.example.tournament.service.MatchService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/matches")
 public class MatchController {
 
-    private final MatchService matchService;
+    @Autowired
+    private MatchRepository matchRepository;
 
-    public MatchController(MatchService matchService) {
-        this.matchService = matchService;
-    }
+    @Autowired
+    private MatchService matchService;
 
-    // ✅ Создание матча
+    @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private VenueRepository venueRepository;
+
+    // --- CREATE ---
     @PostMapping
-    public ResponseEntity<?> createMatch(@RequestBody MatchRequest request) {
-        try {
-            Match match = matchService.createMatch(request);
-            return ResponseEntity.ok(match);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(409).body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", "Internal server error: " + e.getMessage()));
-        }
+    public ResponseEntity<Match> createMatch(@RequestBody MatchRequest request) {
+        Match match = matchService.createMatch(request);
+        return ResponseEntity.ok(match);
     }
 
-    // ✅ Получить все матчи
+
     @GetMapping
-    public ResponseEntity<List<Match>> getAllMatches() {
-        return ResponseEntity.ok(matchService.getAllMatches());
+    public List<Match> getAllMatches() {
+        return matchRepository.findAll();
     }
 
-    // ✅ Получить матч по ID
+
     @GetMapping("/{id}")
-    public ResponseEntity<?> getMatchById(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(matchService.getMatchById(id));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
-        }
+    public ResponseEntity<Match> getMatchById(@PathVariable Long id) {
+        Match match = matchRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found with id: " + id));
+        return ResponseEntity.ok(match);
     }
 
-    // ✅ Удалить матч
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteMatch(@PathVariable Long id) {
-        try {
-            matchService.deleteMatch(id);
-            return ResponseEntity.ok(Map.of("message", "Match deleted successfully"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
-        }
-    }
 
-    // ✅ Получить все матчи конкретной команды
-    @GetMapping("/team/{teamId}")
-    public ResponseEntity<List<Match>> getMatchesByTeam(@PathVariable Long teamId) {
-        return ResponseEntity.ok(matchService.getMatchesByTeam(teamId));
-    }
-
-    // ✅ Получить все предстоящие матчи
     @GetMapping("/upcoming")
-    public ResponseEntity<List<Match>> getUpcomingMatches() {
-        return ResponseEntity.ok(matchService.getUpcomingMatches());
+    public List<Match> getUpcomingMatches() {
+        LocalDateTime now = LocalDateTime.now();
+        return matchRepository.findAll()
+                .stream()
+                .filter(match -> match.getMatchDate().isAfter(now))
+                .sorted(Comparator.comparing(Match::getMatchDate))
+                .collect(Collectors.toList());
+    }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Match> updateMatch(@PathVariable Long id, @RequestBody MatchRequest request) {
+        Match match = matchRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found with id: " + id));
+
+
+        match.setHomeTeam(teamRepository.findById(request.getHomeTeamId())
+                .orElseThrow(() -> new ResourceNotFoundException("Home team not found with id: " + request.getHomeTeamId())));
+
+        match.setAwayTeam(teamRepository.findById(request.getAwayTeamId())
+                .orElseThrow(() -> new ResourceNotFoundException("Away team not found with id: " + request.getAwayTeamId())));
+
+        match.setVenue(venueRepository.findById(request.getVenueId())
+                .orElseThrow(() -> new ResourceNotFoundException("Venue not found with id: " + request.getVenueId())));
+
+        match.setMatchDate(request.getMatchDate());
+        match.setScoreHome(request.getScoreHome());
+        match.setScoreAway(request.getScoreAway());
+
+        Match updated = matchRepository.save(match);
+        return ResponseEntity.ok(updated);
+    }
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMatch(@PathVariable Long id) {
+        Match match = matchRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found with id: " + id));
+        matchRepository.delete(match);
+        return ResponseEntity.noContent().build();
     }
 }

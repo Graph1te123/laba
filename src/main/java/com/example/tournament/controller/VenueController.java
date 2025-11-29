@@ -1,10 +1,13 @@
 package com.example.tournament.controller;
 
+import com.example.tournament.exception.ResourceNotFoundException;
 import com.example.tournament.model.Venue;
 import com.example.tournament.repository.VenueRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/venues")
@@ -17,22 +20,29 @@ public class VenueController {
     }
 
     @PostMapping
-    public Venue createVenue(@RequestBody Venue venue) {
-        return venueRepository.save(venue);
+    public ResponseEntity<Venue> createVenue(@RequestBody Venue venue) {
+        return ResponseEntity.ok(venueRepository.save(venue));
     }
 
     @GetMapping
-    public List<Venue> getAllVenues() {
-        return venueRepository.findAll();
+    public ResponseEntity<List<Venue>> getAllVenues() {
+        return ResponseEntity.ok(venueRepository.findAll());
     }
 
     @GetMapping("/{id}")
-    public Venue getVenue(@PathVariable Long id) {
-        return venueRepository.findById(id).orElse(null);
+    public ResponseEntity<Venue> getVenue(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                venueRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Venue with ID " + id + " not found"))
+        );
     }
 
     @DeleteMapping("/{id}")
-    public void deleteVenue(@PathVariable Long id) {
+    public ResponseEntity<Object> deleteVenue(@PathVariable Long id) {
+        if (!venueRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Venue with ID " + id + " not found");
+        }
         venueRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Venue deleted successfully"));
     }
 }

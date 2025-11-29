@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "match")
 public class Match {
 
     @Id
@@ -11,22 +12,36 @@ public class Match {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "home_team_id")
+    @JoinColumn(name = "home_team_id", referencedColumnName = "id", nullable = false)
     private Team homeTeam;
 
     @ManyToOne
-    @JoinColumn(name = "away_team_id")
+    @JoinColumn(name = "away_team_id", referencedColumnName = "id", nullable = false)
     private Team awayTeam;
 
     @ManyToOne
-    @JoinColumn(name = "venue_id")
+    @JoinColumn(name = "venue_id", referencedColumnName = "id", nullable = false)
     private Venue venue;
 
+    @Column(name = "match_date", nullable = false)
     private LocalDateTime matchDate;
+
+    @Column(name = "score_home")
     private Integer scoreHome;
+
+    @Column(name = "score_away")
     private Integer scoreAway;
 
-    // --- Getters и Setters ---
+
+    public Match() {}
+
+    public Match(Team homeTeam, Team awayTeam, Venue venue, LocalDateTime matchDate) {
+        this.homeTeam = homeTeam;
+        this.awayTeam = awayTeam;
+        this.venue = venue;
+        this.matchDate = matchDate;
+    }
+
 
     public Long getId() {
         return id;
@@ -82,5 +97,18 @@ public class Match {
 
     public void setScoreAway(Integer scoreAway) {
         this.scoreAway = scoreAway;
+    }
+
+    @Override
+    public String toString() {
+        return "Match{" +
+                "id=" + id +
+                ", homeTeam=" + homeTeam.getName() +
+                ", awayTeam=" + awayTeam.getName() +
+                ", venue=" + venue.getName() +
+                ", matchDate=" + matchDate +
+                ", scoreHome=" + scoreHome +
+                ", scoreAway=" + scoreAway +
+                '}';
     }
 }

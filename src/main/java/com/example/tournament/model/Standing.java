@@ -3,95 +3,91 @@ package com.example.tournament.model;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "standing")
 public class Standing {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "team_id", unique = true)
+    @ManyToOne
+    @JoinColumn(name = "team_id", nullable = false)
     private Team team;
 
-    private int played;
-    private int wins;
-    private int draws;
-    private int losses;
-    private int goalsFor;
-    private int goalsAgainst;
-    private int points;
+    @Column(name = "games_played")
+    private Integer gamesPlayed;
 
-    // --- Getters и Setters ---
+    @Column(name = "wins")
+    private Integer wins;
 
-    public Long getId() {
-        return id;
-    }
+    @Column(name = "draws")
+    private Integer draws;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @Column(name = "losses")
+    private Integer losses;
 
-    public Team getTeam() {
-        return team;
-    }
+    @Column(name = "goals_for")
+    private Integer goalsFor;
 
-    public void setTeam(Team team) {
+    @Column(name = "goals_against")
+    private Integer goalsAgainst;
+
+    @Column(name = "points")
+    private Integer points;
+
+
+    public Standing() {}
+
+    public Standing(Team team) {
         this.team = team;
+        this.gamesPlayed = 0;
+        this.wins = 0;
+        this.draws = 0;
+        this.losses = 0;
+        this.goalsFor = 0;
+        this.goalsAgainst = 0;
+        this.points = 0;
     }
 
-    public int getPlayed() {
-        return played;
-    }
 
-    public void setPlayed(int played) {
-        this.played = played;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public int getWins() {
-        return wins;
-    }
+    public Team getTeam() { return team; }
+    public void setTeam(Team team) { this.team = team; }
 
-    public void setWins(int wins) {
-        this.wins = wins;
-    }
+    public Integer getGamesPlayed() { return gamesPlayed; }
+    public void setGamesPlayed(Integer gamesPlayed) { this.gamesPlayed = gamesPlayed; }
 
-    public int getDraws() {
-        return draws;
-    }
+    public Integer getWins() { return wins; }
+    public void setWins(Integer wins) { this.wins = wins; }
 
-    public void setDraws(int draws) {
-        this.draws = draws;
-    }
+    public Integer getDraws() { return draws; }
+    public void setDraws(Integer draws) { this.draws = draws; }
 
-    public int getLosses() {
-        return losses;
-    }
+    public Integer getLosses() { return losses; }
+    public void setLosses(Integer losses) { this.losses = losses; }
 
-    public void setLosses(int losses) {
-        this.losses = losses;
-    }
+    public Integer getGoalsFor() { return goalsFor; }
+    public void setGoalsFor(Integer goalsFor) { this.goalsFor = goalsFor; }
 
-    public int getGoalsFor() {
-        return goalsFor;
-    }
+    public Integer getGoalsAgainst() { return goalsAgainst; }
+    public void setGoalsAgainst(Integer goalsAgainst) { this.goalsAgainst = goalsAgainst; }
 
-    public void setGoalsFor(int goalsFor) {
-        this.goalsFor = goalsFor;
-    }
+    public Integer getPoints() { return points; }
+    public void setPoints(Integer points) { this.points = points; }
 
-    public int getGoalsAgainst() {
-        return goalsAgainst;
-    }
-
-    public void setGoalsAgainst(int goalsAgainst) {
-        this.goalsAgainst = goalsAgainst;
-    }
-
-    public int getPoints() {
-        return points;
-    }
-
-    public void setPoints(int points) {
-        this.points = points;
+    @Override
+    public String toString() {
+        return "Standing{" +
+                "id=" + id +
+                ", team=" + team.getName() +
+                ", gamesPlayed=" + gamesPlayed +
+                ", wins=" + wins +
+                ", draws=" + draws +
+                ", losses=" + losses +
+                ", goalsFor=" + goalsFor +
+                ", goalsAgainst=" + goalsAgainst +
+                ", points=" + points +
+                '}';
     }
 }

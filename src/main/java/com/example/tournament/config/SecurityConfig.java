@@ -1,69 +1,48 @@
 package com.example.tournament.config;
 
-import com.example.tournament.repository.UserRepository;
-import org.springframework.context.annotation.*;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.*;
+import com.example.tournament.security.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.*;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
-import java.util.Collections;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        // Регистрация — всем
-                        .requestMatchers("/api/auth/register").permitAll()
-
-                        // Просмотр турнирной таблицы — USER и ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/standings/**").hasAnyRole("USER", "ADMIN")
-
-                        // Создание данных — только ADMIN
-                        .requestMatchers(HttpMethod.POST,
-                                "/api/matches",
-                                "/api/teams",
-                                "/api/players",
-                                "/api/venues"
-                        ).hasRole("ADMIN")
-
-                        // Управление таблицей (update, reset) — только ADMIN
-                        .requestMatchers(HttpMethod.POST, "/api/standings/update", "/api/standings/reset").hasRole("ADMIN")
-
-                        // Все остальные GET — аутентифицированные
-                        .requestMatchers(HttpMethod.GET, "/api/**").authenticated()
-
-                        // Всё остальное — аутентификация
-                        .anyRequest().authenticated()
-                )
-                .httpBasic(basic -> basic.realmName("tournament"));
-
-        return http.build();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService(UserRepository userRepository) {
-        return username -> userRepository.findByUsername(username)
-                .map(user -> new org.springframework.security.core.userdetails.User(
-                        user.getUsername(),
-                        user.getPassword(),
-                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
-                ))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    }
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 }

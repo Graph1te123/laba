@@ -11,7 +11,7 @@ public class Venue {
     private String name;
     private String location;
 
-    // Getters и Setters
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
