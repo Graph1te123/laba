@@ -1,4 +1,4 @@
-name: CI
+name: HTTPS + CI workflow
 
 on:
   push:
@@ -18,28 +18,19 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
+          cache: maven
 
       - name: Restore TLS keystore from GitHub Secret
-        env:
-          TLS_KEYSTORE_BASE64: ${{ secrets.TLS_KEYSTORE_BASE64 }}
         run: |
           mkdir -p src/main/resources/cert
-          echo "$TLS_KEYSTORE_BASE64" | base64 -d > src/main/resources/cert/server-keystore.p12
+          echo "${{ secrets.TLS_KEYSTORE_BASE64 }}" | base64 -d > src/main/resources/cert/server-keystore.p12
 
       - name: Build with Maven (tests + jar)
-        env:
-          TLS_KEYSTORE_PASSWORD: ${{ secrets.TLS_KEYSTORE_PASSWORD }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        run: |
-          chmod +x mvnw || true
-          ./mvnw -B clean package
+        run: mvn -B clean package    # собирает и прогоняет тесты с Maven [web:281]
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tournament-api-jar
-          path: target/*.jar
-
-
+          name: tournament-jar
+          path: target/*.jar        # выгружает собранный JAR как артефакт CI [web:282][web:284]
