@@ -36,3 +36,13 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# SSL / keystore / certificates
+*.jks
+*.p12
+*.cer
+*.key
+*.csr
+
+server-keystore.p12.b64
+src/main/resources/cert/server-keystore.p12
