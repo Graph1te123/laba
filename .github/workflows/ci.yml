@@ -21,16 +21,21 @@ jobs:
           java-version: "17"
           cache: maven
 
+      - name: Debug TLS secret length
+        run: |
+          echo "TLS_KEYSTORE_BASE64 length:"
+          printf '%s' "${{ secrets.TLS_KEYSTORE_BASE64 }}" | wc -c
+
       - name: Restore TLS keystore from GitHub Secret
         run: |
           mkdir -p src/main/resources/cert
           echo "${{ secrets.TLS_KEYSTORE_BASE64 }}" | base64 -d > src/main/resources/cert/server-keystore.p12
 
       - name: Build with Maven (tests + jar)
-        run: mvn -B clean package    # собирает и прогоняет тесты с Maven [web:281]
+        run: mvn -B clean package
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: tournament-jar
-          path: target/*.jar        # выгружает собранный JAR как артефакт CI [web:282][web:284]
+          path: target/*.jar
