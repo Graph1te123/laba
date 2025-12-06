@@ -16,14 +16,13 @@ public class RegisterRequest {
 
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
-    @Pattern(regexp = ".*[!@#$%^&*()_+].*", message = "Password must contain at least one special character")
+    @Pattern(
+            regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+]).{8,}$",
+            message = "Password must contain at least one uppercase letter, one digit, and one special character"
+    )
     private String password;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
     private String email;
-
-    @NotBlank(message = "Role is required")
-    @Pattern(regexp = "ADMIN|USER", message = "Role must be ADMIN or USER")
-    private String role;
 }

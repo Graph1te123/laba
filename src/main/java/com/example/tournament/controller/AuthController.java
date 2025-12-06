@@ -5,6 +5,7 @@ import com.example.tournament.dto.RegisterRequest;
 import com.example.tournament.model.User;
 import com.example.tournament.repository.UserRepository;
 import com.example.tournament.service.TokenService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,16 +35,10 @@ public class AuthController {
     private TokenService tokenService;
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            Map<String, String> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("error", "Email already registered");
-            return ResponseEntity.badRequest().body(response);
-        }
-
-        if (!isPasswordStrong(request.getPassword())) {
-            Map<String, String> response = new HashMap<>();
-            response.put("error", "Password must be at least 8 characters");
             return ResponseEntity.badRequest().body(response);
         }
 
@@ -51,9 +46,10 @@ public class AuthController {
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole("ROLE_USER"); // по умолчанию обычный пользователь
         userRepository.save(user);
 
-        Map<String, String> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         response.put("message", "User registered successfully");
         response.put("email", user.getEmail());
         return ResponseEntity.ok(response);
@@ -75,10 +71,9 @@ public class AuthController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             Map<String, Object> tokenPair = tokenService.createTokenPair(user);
-
             return ResponseEntity.ok(tokenPair);
         } catch (Exception e) {
-            Map<String, String> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("error", "Invalid email or password");
             return ResponseEntity.status(401).body(response);
         }
@@ -88,17 +83,16 @@ public class AuthController {
     public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authHeader) {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                Map<String, String> response = new HashMap<>();
+                Map<String, Object> response = new HashMap<>();
                 response.put("error", "Missing or invalid authorization header");
                 return ResponseEntity.status(401).body(response);
             }
 
             String refreshToken = authHeader.substring(7);
             Map<String, Object> tokenPair = tokenService.refreshTokenPair(refreshToken);
-
             return ResponseEntity.ok(tokenPair);
         } catch (Exception e) {
-            Map<String, String> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("error", e.getMessage());
             return ResponseEntity.status(401).body(response);
         }
@@ -108,7 +102,7 @@ public class AuthController {
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                Map<String, String> response = new HashMap<>();
+                Map<String, Object> response = new HashMap<>();
                 response.put("error", "Missing authorization header");
                 return ResponseEntity.status(400).body(response);
             }
@@ -116,17 +110,13 @@ public class AuthController {
             String accessToken = authHeader.substring(7);
             tokenService.revokeSession(accessToken);
 
-            Map<String, String> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("message", "Logged out successfully");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            Map<String, String> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("error", "Logout failed");
             return ResponseEntity.status(400).body(response);
         }
-    }
-
-    private boolean isPasswordStrong(String password) {
-        return password.length() >= 8;
     }
 }

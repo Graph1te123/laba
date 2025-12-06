@@ -8,7 +8,6 @@ import com.example.tournament.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,12 +24,10 @@ public class TokenService {
     @Transactional
     public Map<String, Object> createTokenPair(User user) {
         String email = user.getEmail();
-
         String accessToken = jwtTokenProvider.generateAccessToken(email);
         String refreshToken = jwtTokenProvider.generateRefreshToken(email);
 
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(7);
-
         UserSession session = new UserSession(user, refreshToken, accessToken, expiresAt);
         userSessionRepository.save(session);
 
@@ -39,7 +36,6 @@ public class TokenService {
         tokenPair.put("refreshToken", refreshToken);
         tokenPair.put("expiresIn", 900);
         tokenPair.put("tokenType", "Bearer");
-
         return tokenPair;
     }
 
@@ -54,9 +50,9 @@ public class TokenService {
             throw new IllegalArgumentException("Token is not a refresh token");
         }
 
-        UserSession session = userSessionRepository.findByRefreshTokenAndStatus(
-                refreshToken, SessionStatus.ACTIVE
-        ).orElseThrow(() -> new IllegalArgumentException("Refresh token not found or expired"));
+        UserSession session = userSessionRepository
+                .findByRefreshTokenAndStatus(refreshToken, SessionStatus.ACTIVE)
+                .orElseThrow(() -> new IllegalArgumentException("Refresh token not found or expired"));
 
         if (session.isExpired()) {
             session.setStatus(SessionStatus.EXPIRED);
@@ -81,7 +77,6 @@ public class TokenService {
         tokenPair.put("refreshToken", newRefreshToken);
         tokenPair.put("expiresIn", 900);
         tokenPair.put("tokenType", "Bearer");
-
         return tokenPair;
     }
 
@@ -95,6 +90,7 @@ public class TokenService {
         userSessionRepository.save(session);
     }
 
+    @Transactional
     public boolean isAccessTokenValid(String accessToken) {
         if (!jwtTokenProvider.validateToken(accessToken)) {
             return false;
@@ -108,6 +104,19 @@ public class TokenService {
         UserSession session = userSessionRepository.findByAccessToken(accessToken)
                 .orElse(null);
 
-        return session != null && session.isActive();
+        if (session == null) {
+            return false;
+        }
+
+        // Если сессия истекла, сразу пометим её как EXPIRED в БД
+        if (session.isExpired()) {
+            if (session.getStatus() != SessionStatus.EXPIRED) {
+                session.setStatus(SessionStatus.EXPIRED);
+                userSessionRepository.save(session);
+            }
+            return false;
+        }
+
+        return session.getStatus() == SessionStatus.ACTIVE;
     }
 }
